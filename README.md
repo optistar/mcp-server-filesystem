@@ -3,13 +3,16 @@
 This is a Go implementation of the Model Context Protocol (MCP) server for filesystem operations,
 based on Anthropic's reference implementation from [modelcontextprotocol/servers](https://github.com/modelcontextprotocol/servers/blob/main/src/filesystem/index.ts).
 
-Significant changes:
+Significant differences from the reference implementation include:
 
 - The `get_file_info` and `directory_tree` commands return JSON data.
 - The `search_files` tool supports gitignore-style exclude patterns.
 
 A full test suite is included to ensure the server behaves as expected.
-Unusually, testing is done using the `tester` command, an MCP client that can also be used to test other MCP servers.
+
+- The tests can be run normally with `go test`.
+- A `tester` command packages the test suite as an MCP client that can also be used to test the MCP server command, 
+  or another MCP server implementation.
 
 This repository is unrelated to [mark3labs/mcp-filesystem-server](https://github.com/mark3labs/mcp-filesystem-server.git).
 
