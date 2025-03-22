@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
+	top "github.com/optistar/mcp-server-filesystem"
 	"os"
 	"path/filepath"
 )
@@ -23,7 +24,7 @@ func main() {
 	// Normalize allowed directories
 	allowedDirectories := make([]string, 0, len(os.Args)-1)
 	for _, dir := range os.Args[1:] {
-		absPath, err := filepath.Abs(expandHome(dir))
+		absPath, err := filepath.Abs(top.ExpandHome(dir))
 		if err != nil {
 			fmt.Printf("Error resolving path %s: %v\n", dir, err)
 			os.Exit(1)
@@ -37,28 +38,10 @@ func main() {
 		"0.2.0",
 	)
 
-	// Define tools
-	tools := []struct {
-		tool    mcp.Tool
-		handler func(context.Context, mcp.CallToolRequest, []string) (*mcp.CallToolResult, error)
-	}{
-		{defineReadFileTool(), readFileHandler},
-		{defineReadMultipleFilesTool(), readMultipleFilesHandler},
-		{defineWriteFileTool(), writeFileHandler},
-		{defineEditFileTool(), editFileHandler},
-		{defineCreateDirectoryTool(), createDirectoryHandler},
-		{defineListDirectoryTool(), listDirectoryHandler},
-		{defineDirectoryTreeTool(), directoryTreeHandler},
-		{defineMoveFileTool(), moveFileHandler},
-		{defineSearchFilesTool(), searchFilesHandler},
-		{defineGetFileInfoTool(), getFileInfoHandler},
-		{defineListAllowedDirectoriesTool(), listAllowedDirectoriesHandler},
-	}
-
 	// Register tools with handlers
-	for _, t := range tools {
-		handler := t.handler // Capture in closure
-		s.AddTool(t.tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	for _, t := range top.Tools {
+		handler := t.Handler // Capture in closure
+		s.AddTool(t.Tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			return handler(ctx, req, allowedDirectories)
 		})
 	}

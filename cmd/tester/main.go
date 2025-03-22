@@ -6,24 +6,25 @@ import (
 	"github.com/fatih/color"
 	"github.com/mark3labs/mcp-go/client"
 	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/optistar/mcp-server-filesystem/tester"
 	"log"
 	"os"
 )
 
-type ToolTestFunc func(t T)
+type ToolTestFunc func(t tester.T, f tester.MCPClientFactory)
 
 var toolTestMap = map[string]ToolTestFunc{
-	"read_file":                readFileTester,
-	"read_multiple_files":      readMultipleFilesTester,
-	"write_file":               writeFileTester,
-	"edit_file":                editFileTester,
-	"create_directory":         createDirectoryTester,
-	"list_directory":           listDirectoryTester,
-	"directory_tree":           directoryTreeTester,
-	"move_file":                moveFileTester,
-	"search_files":             searchFilesTester,
-	"get_file_info":            getFileInfoTester,
-	"list_allowed_directories": listAllowedDirectoriesTester,
+	"read_file":                tester.TestReadFile,
+	"read_multiple_files":      tester.TestReadMultipleFiles,
+	"write_file":               tester.TestWriteFile,
+	"edit_file":                tester.TestEditFile,
+	"create_directory":         tester.TestCreateDirectory,
+	"list_directory":           tester.TestListDirectory,
+	"directory_tree":           tester.TestDirectoryTree,
+	"move_file":                tester.TestMoveFile,
+	"search_files":             tester.TestSearchFiles,
+	"get_file_info":            tester.TestGetFileInfo,
+	"list_allowed_directories": tester.TestListAllowedDirectories,
 }
 
 func main() {
@@ -73,14 +74,18 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to list tools: %v", err)
 	}
-	ctx = WithMCPClientFactory(ctx, makeClient)
-	tc := NewTestContext(ctx, "", mainTempDir)
+	factory := func(ctx context.Context, args []string) (*mcp.InitializeResult, tester.MCPClient) {
+		return makeClient(ctx, args)
+	}
+	tc := tester.NewTestContext(ctx, "", mainTempDir, factory)
 	_ = cli.Close()
 
 	anyFailed := false
 	for _, tool := range tools.Tools {
 		if tt, ok := toolTestMap[tool.Name]; ok {
-			tc.Run(tool.Name, tt)
+			tc.Run(tool.Name, func(t tester.T) {
+				tt(t, factory)
+			})
 			if tc.Failed() {
 				anyFailed = true
 			}
